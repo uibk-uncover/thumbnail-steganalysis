@@ -16,8 +16,6 @@ def run_embedding(
     embeddings: typing.List[str],
     alphas: typing.List[float],
     # marginalized parameters
-    beta: float,
-    quality: int = 75,
     sampling_rate: float = .25,
     sampling_method: str = 'nearest',
     use_antialiasing: bool = True,
@@ -27,7 +25,7 @@ def run_embedding(
     dataset_path = pathlib.Path(dataset_path)
 
     post_compress = True
-    cover_dir = f'jpegs_q{quality:02d}'
+    cover_dir = 'jpegs_q75_512'
 
     # construct image pairs
     images = pd.DataFrame()
@@ -39,7 +37,7 @@ def run_embedding(
 
             # get images
             cover_path = dataset_path / cover_dir
-            stego_path = dataset_path / f'stego_{embedding}_alpha_{alpha}_beta_{beta}_{cover_dir}'
+            stego_path = dataset_path / f'stego_{embedding}_alpha_{alpha}_{cover_dir}'
             cover_images = pd.read_csv(cover_path / 'files.csv')
             stego_images = pd.read_csv(stego_path / 'files.csv')
 
@@ -51,7 +49,7 @@ def run_embedding(
 
             #
             cover_stego_images = cover_images.join(
-                stego_images[['name','stego_method','alpha','beta']],
+                stego_images[['name', 'stego_method', 'alpha']],
                 how='inner', lsuffix='_cover', rsuffix='_stego',
             ).reset_index(drop=True)
             cover_stego_images['post_compress'] = post_compress
@@ -75,7 +73,7 @@ def run_embedding(
 
     # to long format (for processing)
     res = pd.DataFrame(res)
-    print(res)
+    # print(res)
     # pre-/post- w.r.t. thumbnail compression
     res = pd.melt(
         res[[
@@ -110,5 +108,5 @@ def run_embedding(
     ).reset_index(drop=False)
     res.columns = ['_'.join([c for c in reversed(col) if c]) for col in res.columns]
 
-    print(res)
+    # print(res)
     return res

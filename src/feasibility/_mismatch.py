@@ -52,17 +52,18 @@ def compute_mismatch(
 
     # create thumbnail
     sampling_rate = 128 / x0.shape[0]
-
     x0_t, y0_t = _defs.scale_compress_image(
         x0,
         sampling_method=sampling_method,
         use_antialiasing=use_antialiasing,
+        thumbnail_shape=(128, 128),
         tmp=tmp,
     )
     xm_t, ym_t = _defs.scale_compress_image(
         xm,
         sampling_method=sampling_method,
         use_antialiasing=use_antialiasing,
+        thumbnail_shape=(128, 128),
         tmp=tmp,
     )
 

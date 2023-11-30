@@ -19,14 +19,11 @@ def run_sampling(
     # marginalized parameters
     embedding: str,
     alpha: float,
-    beta: float,
-    quality: int = 75,
-    thumbnail_quality: int = 75,
     **kw
 ):
     # data paths
-    cover_dir = f'jpegs_q{quality:02d}'
-    stego_dir = f'stego_{embedding}_alpha_{alpha}_beta_{beta}_{cover_dir}'
+    cover_dir = f'jpegs_q75'
+    stego_dir = f'stego_{embedding}_alpha_{alpha}_{cover_dir}'
 
     # construct image pairs
     images = pd.DataFrame()
@@ -36,11 +33,11 @@ def run_sampling(
 
                 # data path
                 shape = int(np.round(128/rate))
-                dataset_path = pathlib.Path(f'{dataset_path_prefix}_{shape}')
+                dataset_path = pathlib.Path(dataset_path_prefix)
                 # thumb_dir = f'thumbnail_{method}_q{thumbnail_quality}_{cover_dir}'
                 # get images
-                cover_path = dataset_path / cover_dir
-                stego_path = dataset_path / stego_dir
+                cover_path = dataset_path / f'{cover_dir}_{shape}'
+                stego_path = dataset_path / f'{stego_dir}_{shape}'
                 cover_images = pd.read_csv(cover_path / 'files.csv')
                 stego_images = pd.read_csv(stego_path / 'files.csv')
 
@@ -91,7 +88,7 @@ def run_sampling(
         'post',
     ]]
     res = res.rename({'post': _defs.DIFF_LABEL}, axis=1)
-    print(res)
+    # print(res)
     # res = pd.melt(
     #     res[[
     #         _defs.SAMPLING_METHOD_LABEL, _defs.SAMPLING_RATE_LABEL,
@@ -109,7 +106,7 @@ def run_sampling(
         res.groupby([_defs.SAMPLING_METHOD_LABEL, _defs.SAMPLING_RATE_LABEL, _defs.ANTIALIASING_LABEL])
         .agg({_defs.DIFF_LABEL: ['mean', 'std', 'count']})
     ).reset_index(drop=False)
-    res[(_defs.DIFF_LABEL,'ci95')] = (
+    res[(_defs.DIFF_LABEL, 'ci95')] = (
         scipy.stats.norm.ppf(.975) *
         res[_defs.DIFF_LABEL]['std'] /
         res[_defs.DIFF_LABEL]['count'].apply(np.sqrt)
@@ -124,5 +121,5 @@ def run_sampling(
     ).reset_index(drop=False)
     res.columns = ['_'.join([c for c in reversed(col) if c]) for col in res.columns]
 
-    print(res)
+    # print(res)
     return res
