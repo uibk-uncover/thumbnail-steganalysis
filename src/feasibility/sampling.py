@@ -1,3 +1,8 @@
+"""
+
+Author: Martin Benes
+Affiliation: University of Innsbruck
+"""
 
 import joblib
 import numpy as np

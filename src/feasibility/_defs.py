@@ -1,26 +1,34 @@
+"""
+
+Author: Martin Benes
+Affiliation: University of Innsbruck
+"""
 
 import imageops
 import joblib
 import jpeglib
 import numpy as np
 import tempfile
-from tqdm import tqdm
+import tqdm
 import typing
 
-DIFF_LABEL = 'changerate'
-STAGE_LABEL = 'stage'
-BEFORE_COMPRESSION = 'pre'
-AFTER_COMPRESSION = 'post'
-AFTER_DECOMPRESSION = 'dec'
-EMBEDDING_LABEL = 'embedding'
-EMBEDDING_RATE_LABEL = 'embrate'
-SAMPLING_METHOD_LABEL = 'sampmethod'
-SAMPLING_RATE_LABEL = 'samprate'
-ANTIALIASING_LABEL = 'antialiasing'
+from .. import subsample
+
+DIFF_LABEL: str = 'changerate'
+STAGE_LABEL: str = 'stage'
+BEFORE_COMPRESSION: str = 'pre'
+AFTER_COMPRESSION: str = 'post'
+AFTER_DECOMPRESSION: str = 'dec'
+EMBEDDING_LABEL: str = 'embedding'
+EMBEDDING_RATE_LABEL: str = 'embrate'
+SAMPLING_METHOD_LABEL: str = 'sampmethod'
+SAMPLING_RATE_LABEL: str = 'samprate'
+ANTIALIASING_LABEL: str = 'antialiasing'
+
 
 class ProgressParallel(joblib.Parallel):
-    def __call__(self, *args, total:int=None, **kwargs):
-        with tqdm(total=total) as self._pbar:
+    def __call__(self, *args, total: int = None, **kwargs):
+        with tqdm.tqdm(total=total) as self._pbar:
             return joblib.Parallel.__call__(self, *args, **kwargs)
 
     def print_progress(self):
@@ -40,9 +48,9 @@ def scale_compress_image(
     # subsample
     if sampling_method != 'magick':
         if sampling_method == 'qlmanage':
-            x_t = imageops.subsample.qlmanage.scale_image(x, 128)
+            x_t = subsample.qlmanage.scale_image(x, 128)
         else:
-            x_t = imageops.scale_image(
+            x_t = subsample.scale_image(
                 x, thumbnail_shape,
                 sampling_method,
                 use_antialiasing=use_antialiasing
@@ -54,10 +62,9 @@ def scale_compress_image(
         ym_t = jpeglib.read_dct(tmp.name)
         ym_t.load()
         return x_t, ym_t
-
     # subsample & compress
     else:
-        y_t = imageops.subsample.magick.scale_compress_image(
+        y_t = subsample.magick.scale_compress_image(
             x, thumbnail_shape,
             use_antialiasing=use_antialiasing
         )

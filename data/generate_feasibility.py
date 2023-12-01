@@ -1,14 +1,18 @@
 """Generates dataset for feasibility study.
 
-$ python src/generate_feasibility.py
+$ python3 data/generate_feasibility.py
 
-The file will download raw images
+The file will download raw images from ALASKA server.
+You can also provide your local copy of raws via command-line parameter.
+
+$ python3 data/generate_feasibility.py --dataset /Volumes/SSD/ALASKA2_RAW
 
 Author: Martin Benes
 Affiliation: University of Innsbruck
 """
 
 import argparse
+import conseal as cl
 import jpeglib
 import logging
 import numpy as np
@@ -24,7 +28,6 @@ import typing
 import warnings
 
 import _seeds
-import stegolab2 as sl2
 
 # feasibility = pd.read_csv('feasibility.csv')
 # feasibility['stem'] = feasibility['name'].apply(lambda n: pathlib.Path(n).stem)
@@ -35,9 +38,15 @@ import stegolab2 as sl2
 
 
 def get_imread(path: str) -> typing.Callable:
+    """Controls for image reading (download / read from file).
+
+    Args:
+        path (str): Path to a dataset directory, or URL.
+    """
     download = not pathlib.Path(path).is_dir()
 
     def imread_download(fname: str) -> bytes:
+        """Returns image content downloaded from URL."""
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore',
@@ -48,9 +57,13 @@ def get_imread(path: str) -> typing.Callable:
         return res.content
 
     def imread_load(fname: str) -> bytes:
-        with open(f'{path}/{fname[:2]}/{fname}', 'rb') as fp:
+        """Returns image content loaded from file."""
+        fint = int(fname[:5])
+        subd = fint//1000-int((fint % 1000) == 0)
+        with open(f'{path}/{subd:02d}/{fname}', 'rb') as fp:
             return fp.read()
 
+    # download or load
     return imread_download if download else imread_load
 
 
@@ -67,11 +80,11 @@ def generate_dataset(
 
     # iterate files
     files = pd.read_csv('data/files_feasibility.csv')
-    # files = files[:3]  # DEBUG
     pbar = tqdm.tqdm(files['name_raw'])
     images = []
     for f in pbar:
         pbar.set_description(pathlib.Path(f).name)
+        output_f = f'{pathlib.Path(f).stem}.png'
 
         # download raw
         try:
@@ -101,8 +114,10 @@ def generate_dataset(
         with tempfile.NamedTemporaryFile(suffix='.ppm') as tmp:
             tmp.write(res.stdout)
             x = np.array(Image.open(tmp.name))
+        if len(x.shape) != 2:  # bugfix (applies to a few images only)
+            logging.info(f'{f} has {x.shape[2]} channels')
+            continue
 
-        output_f = f'{pathlib.Path(f).stem}.png'
         res = {
             'name': str(pathlib.Path('images') / output_f),
             'height_original': x.shape[0],
@@ -138,6 +153,7 @@ def prepare_covers(crop_size: int):
     # input path
     path = pathlib.Path('data/feasibility')
     input_files = pd.read_csv(f'{path}/images/files.csv')
+    input_files = input_files[~input_files['height'].isna()]
     input_filepaths = input_files['name'].apply(lambda f: str(path / f))
 
     # Create destination directory
@@ -153,7 +169,7 @@ def prepare_covers(crop_size: int):
     pbar = tqdm.tqdm(enumerate(input_filepaths), total=len(input_filepaths))
     for i, input_filepath in pbar:
         input_basename = pathlib.Path(input_filepath).stem
-        pbar.set_description(input_basename)
+        pbar.set_description(pathlib.Path(input_filepath).name)
 
         # Ensure that cover image exists
         assert os.path.exists(input_filepath)
@@ -213,13 +229,15 @@ def prepare_jpegs(crop_size: int):
     pbar = tqdm.tqdm(enumerate(input_filepaths), total=len(input_filepaths))
     for i, input_filepath in pbar:
         input_basename = pathlib.Path(input_filepath).stem
-        pbar.set_description(input_basename)
+        pbar.set_description(f'{input_basename}.jpeg')
 
         # Ensure that cover image exists
         assert os.path.exists(input_filepath)
 
         # Read image and convert from PIL to numpy
-        x = np.array(Image.open(input_filepath))[..., None]
+        x = np.array(Image.open(input_filepath))
+        if len(x.shape) == 2:
+            x = x[..., None]
 
         # save spatial
         compressed_filepath = output_dir / f'{input_basename}.jpeg'
@@ -251,14 +269,15 @@ def prepare_jpegs(crop_size: int):
 
 
 EMBEDDINGS = {
-    'nsF5': sl2.nsF5,
-    'UERD': sl2.uerd,
-    'J-UNIWARD': sl2.juniward,
+    'nsF5': cl.nsF5,
+    'UERD': cl.uerd,
+    'J-UNIWARD': cl.juniward,
 }
 
 
 def prepare_stegos(
     cover_dir: str,
+    path: str,
     method: str,
     alpha: float,
 ):
@@ -270,7 +289,7 @@ def prepare_stegos(
     :param skip_existing: if True, skip existing images. Otherwise, overwrite existing images.
     """
     # Find JPEG covers
-    path = pathlib.Path('data/feasibility')
+    path = pathlib.Path(path)
     cover_files = pd.read_csv(path / cover_dir / 'files.csv')
     cover_filepaths = cover_files['name'].apply(lambda f: str(path / f))
 
@@ -311,7 +330,7 @@ def prepare_stegos(
 
         # provide implementation
         if method in {'J-UNIWARD'}:
-            kw['implementation'] = sl2.juniward.IMPLEMENTATION_ORIGINAL
+            kw['implementation'] = cl.juniward.IMPLEMENTATION_ORIGINAL
 
         # provide QT
         if method in {'J-UNIWARD', 'UERD'}:
@@ -369,7 +388,7 @@ if __name__ == '__main__':
 
     # arguments
     parser = argparse.ArgumentParser(
-        description='Processing the steganographic dataset for training'
+        description='Processing the dataset for feasibility study'
     )
     parser.add_argument(
         '--dataset',
@@ -388,12 +407,23 @@ if __name__ == '__main__':
     crop_size = 512
     prepare_covers(crop_size)
     jpeg_dir = prepare_jpegs(crop_size)
+
     for method in ['nsF5', 'UERD', 'J-UNIWARD']:
         for alpha in [.05, .1, .15, .2, .25, .3, .35, .4]:
-            stego_dir = prepare_stegos(jpeg_dir, method=method, alpha=alpha)
+            stego_dir = prepare_stegos(
+                jpeg_dir,
+                path='data/feasibility',
+                method=method,
+                alpha=alpha,
+            )
 
     #
     for crop_size in [256, 640, 800, 960, 1024, 1280, 1600, 2048, 2560]:
         prepare_covers(crop_size)
         jpeg_dir = prepare_jpegs(crop_size)
-        prepare_stegos(jpeg_dir, method='nsF5', alpha=.2)
+        prepare_stegos(
+            jpeg_dir,
+            path='data/feasibility',
+            method='nsF5',
+            alpha=.2,
+        )

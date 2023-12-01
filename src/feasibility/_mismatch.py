@@ -1,21 +1,20 @@
+"""
 
-import imageops
+Author: Martin Benes
+Affiliation: University of Innsbruck
+"""
+
 import jpeglib
 import numpy as np
-import pathlib
 from PIL import Image
 import tempfile
 import typing
 
 from . import _defs
 
+
 def dct_size(dct: np.ndarray) -> int:
     return dct.size
-
-
-def px_relative_mismatch(x1: np.ndarray, x2: np.ndarray) -> float:
-    """Ratio of mismatching pixels."""
-    return (x1 != x2).mean()
 
 
 def dct_absolute_mismatch(dct1: np.ndarray, dct2: np.ndarray) -> int:

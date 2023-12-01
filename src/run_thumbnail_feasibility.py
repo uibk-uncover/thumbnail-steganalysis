@@ -1,4 +1,8 @@
-""""""
+"""
+
+Author: Martin Benes
+Affiliation: University of Innsbruck
+"""
 
 import feasibility
 import numpy as np
@@ -17,7 +21,7 @@ if __name__ == '__main__':
         'data/feasibility',
         # iterable parameters
         embeddings=['J-UNIWARD', 'UERD', 'nsF5'],
-        alphas=[.4, .35, .3, .25, .2, .15 , .1, .05],
+        alphas=[.4, .35, .3, .25, .2, .15, .1, .05],
         # marginalized parameters
         sampling_rate=sampling_rate,
         sampling_method=sampling_method,
@@ -26,11 +30,12 @@ if __name__ == '__main__':
         n_jobs=20, backend='loky',
     )
     # export
+    aa = {"_aa" if use_antialiasing else ""}
     res.to_csv(
         'results/feasibility/'
         f'embedding'
         f'_quality_75'
-        f'_sampling_{sampling_method}_{sampling_rate}{"_aa" if use_antialiasing else ""}'
+        f'_sampling_{sampling_method}_{sampling_rate}{aa}'
         '.csv',
         index=False,
     )
@@ -45,7 +50,6 @@ if __name__ == '__main__':
         # marginalized parameters
         embedding=embedding,
         alpha=alpha,
-        # thumbnail_quality=thumbnail_quality,
         # joblib
         n_jobs=20, backend='loky',
     )
@@ -58,6 +62,4 @@ if __name__ == '__main__':
         f'_quality_75_75'
         '.csv',
         index=False,
-        # lineterminator='\n',
-        # quoting=csv.QUOTE_NONNUMERIC,
     )
