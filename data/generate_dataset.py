@@ -1,5 +1,9 @@
 """Script to prepare dataset for main experiment.
 
+$ python3 data/generate_dataset --dataset /home/martin/ALASKA_v2_TIFF_512_COLOR
+
+The program expects you already downloaded ALASKA2 dataset.
+
 Author: Martin Benes
 Affiliation: University of Innsbruck
 """
@@ -117,6 +121,8 @@ if __name__ == '__main__':
     args.dataset = pathlib.Path(args.dataset)
     for rotation in [0, 90, 180, 270]:
         jpeg_dir = prepare_jpegs(args.dataset, rotation=rotation)
+
+        # generate stegos
         for alpha in [.4, .2, .1]:
             for method in ['nsF5', 'UERD', 'J-UNIWARD']:
                 stego_dir = feasibility.prepare_stegos(
@@ -125,3 +131,7 @@ if __name__ == '__main__':
                     method=method,
                     alpha=alpha,
                 )
+
+        # generate thumbnails
+        # TODO: cover
+        # TODO: stego (only one specific)
