@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 import typing
 
-from ._common import CLAMP, parse_xy_tuple
+from ._defs import CLAMP, parse_xy_tuple
 
 @numba.jit(nopython=True, fastmath=True, nogil=True, cache=True, parallel=True)
 def kernel(t):

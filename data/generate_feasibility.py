@@ -12,7 +12,7 @@ Affiliation: University of Innsbruck
 """
 
 import argparse
-import conseal as cl
+import stegolab2 as cl
 import jpeglib
 import logging
 import numpy as np
@@ -291,7 +291,6 @@ def prepare_stegos(
     # Find JPEG covers
     path = pathlib.Path(path)
     cover_files = pd.read_csv(path / cover_dir / 'files.csv')
-    cover_filepaths = cover_files['name'].apply(lambda f: str(path / f))
 
     # Create stego directory
     output_dirname = f'stego_{method}_alpha_{alpha}_{cover_dir}'
@@ -308,8 +307,9 @@ def prepare_stegos(
     # Find steganographic implementation
     simulate_single_channel = EMBEDDINGS[method].simulate_single_channel  # update
 
-    pbar = tqdm.tqdm(cover_filepaths, total=len(cover_filepaths))
-    for cover_filepath in pbar:
+    pbar = tqdm.tqdm(cover_files.iterrows(), total=len(cover_files))
+    for i, row in pbar:
+        cover_filepath = path / row['name']
         cover_basename = pathlib.Path(cover_filepath).stem
         pbar.set_description(cover_basename)
 
@@ -368,10 +368,12 @@ def prepare_stegos(
         # Keep records
         output_records.append({
             'name': os.path.relpath(stego_filepath, path),
-            'height': cover.height,
-            'width': cover.width,
+            'height': row['height'],
+            'width': row['width'],
             'stego_method': method,
             'alpha': alpha,
+            'quality': row['quality'],
+            'rotation': row['rotation']
         })
 
     # Concatenate records

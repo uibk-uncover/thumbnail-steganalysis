@@ -12,7 +12,7 @@ import tempfile
 import tqdm
 import typing
 
-from .. import subsample
+import subsample
 
 DIFF_LABEL: str = 'changerate'
 STAGE_LABEL: str = 'stage'
