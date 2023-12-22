@@ -1,2 +1,5 @@
 conseal
 requests
+scikit-learn
+tensorboard
+torchinfo

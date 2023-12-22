@@ -1,0 +1,10 @@
+stego_method,alpha,P_FP,mismatch,count
+J-UNIWARD,0.1,0.0,0,10
+J-UNIWARD,0.2,0.0,0,10
+J-UNIWARD,0.4,0.0,0,10
+UERD,0.1,0.0,0,10
+UERD,0.2,0.0,0,10
+UERD,0.4,0.0,0,10
+nsF5,0.1,0.0,0,10
+nsF5,0.2,0.0,0,10
+nsF5,0.4,0.0,0,10
