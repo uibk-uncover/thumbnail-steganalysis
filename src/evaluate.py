@@ -234,7 +234,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Data
-    parser.add_argument('--dataset', type=pathlib.Path, help='Path to image root', default='/scratch/martin.benes/alaska_20230303')
+    parser.add_argument('--dataset', type=pathlib.Path, help='Path to image root', default='data/dataset')
     parser.add_argument('--te_csv', type=pathlib.Path, help='Path to csv file containing the test images', default='config/split_te.csv')
     # Data: Covers
     parser.add_argument('--shape', nargs='+', type=int, default=None, help='Dataset shape')
@@ -265,8 +265,6 @@ if __name__ == '__main__':
     with open(args['model'] / 'config.json') as f:
         config = json.load(f)
     config.update((k, v) for k, v in args.items() if v is not None)
-    if 'thumbnail_diff' not in config:
-        config['thumbnail_diff'] = False
     config['thumbnail_size'] = config['thumbnail_shape'][0]
     config['thumbnail_upside'] = False
 
